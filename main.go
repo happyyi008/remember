@@ -66,17 +66,19 @@ func main() {
 	json.Unmarshal(content, remember)
 	log.Debugf("Done init: %+v", remember)
 
-	if len(os.Args) < 2 {
+	cliArgs := flag.Args()
+
+	if len(cliArgs) < 2 {
 		// should read message from stdin
 		// maybe have an interactive mode
 		return
 	}
-	cliArgs := flag.Args()
+	log.Debugf("Arguments: %+v", cliArgs)
 	switch cliArgs[0] {
 	case "ls":
 		remember.listTodo()
 	case "rm":
-		remember.deleteTodo()
+		remember.deleteTodo(cliArgs)
 	default:
 		remember.addTodo()
 	}
@@ -90,5 +92,6 @@ func write(payload []byte) {
 func checkErr(err error) {
 	if err != nil {
 		log.Error(err)
+		return
 	}
 }

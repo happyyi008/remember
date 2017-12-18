@@ -29,6 +29,10 @@ func (r *Remember) addTodo() {
 
 // TODO have different ways of printing
 func (r *Remember) listTodo() {
+	if len(r.Todos) == 0 {
+		fmt.Println("You have no todos in your list.")
+		return
+	}
 	fmt.Println("Your list of Todos:")
 	// TODO have max line length based on terminal width and break line
 	// so long todos don't break printing
@@ -41,12 +45,15 @@ func (r *Remember) listTodo() {
 	w.Flush()
 }
 
-func (r *Remember) deleteTodo() {
-	if len(os.Args) != 3 {
+func (r *Remember) deleteTodo(args []string) {
+	if len(args) != 2 {
 		log.Error("Invalid command: missing arguments")
+		return
 	}
-	indexToDelete, err := strconv.Atoi(os.Args[2])
-	checkErr(err)
+	indexToDelete, err := strconv.Atoi(args[1])
+	if err != nil {
+		fmt.Println("Not a valid index.")
+	}
 	r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
 	r.writeToFile()
 }
