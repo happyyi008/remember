@@ -68,7 +68,7 @@ func main() {
 
 	cliArgs := flag.Args()
 
-	if len(cliArgs) < 2 {
+	if len(cliArgs) == 0 {
 		// should read message from stdin
 		// maybe have an interactive mode
 		return
