@@ -5,8 +5,8 @@ package main
  * next features:
  * status for todos
  * ability to change the status of a todo mark done
- * list status in ls
- * only list todos with status
+ * show status by colors
+ * filter ls by status
  *
  */
 
@@ -69,10 +69,10 @@ func main() {
 	cliArgs := flag.Args()
 
 	if len(cliArgs) == 0 {
-		// should read message from stdin
-		// maybe have an interactive mode
+		remember.addTodo(cliArgs)
 		return
 	}
+
 	log.Debugf("Arguments: %+v", cliArgs)
 	switch cliArgs[0] {
 	case "ls":
@@ -80,7 +80,7 @@ func main() {
 	case "rm":
 		remember.deleteTodo(cliArgs)
 	default:
-		remember.addTodo()
+		remember.addTodo(cliArgs)
 	}
 	remember.writeToFile()
 }
