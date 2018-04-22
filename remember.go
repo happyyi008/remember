@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -12,33 +13,23 @@ import (
 	"time"
 )
 
-type Todo struct {
-	Message   string    `json:message`
-	Timestamp time.Time `json:timestamp`
-}
-
-func NewTodo(message string, timestamp time.Time) *Todo {
-	return &Todo{Message: message, Timestamp: timestamp}
-}
-
-// The type def and the follwing three funcs are for sorting todos
-// by timestamp. Latest todo at the top.
-type TodoByTimestamp []Todo
-
-func (t TodoByTimestamp) Len() int {
-	return len(t)
-}
-
-func (t TodoByTimestamp) Less(i, j int) bool {
-	return t[j].Timestamp.Before(t[i].Timestamp)
-}
-
-func (t TodoByTimestamp) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-
 type Remember struct {
 	Todos []Todo `json:"todoList"`
+}
+
+// initializes remember struct from file or create a new one
+func NewRemember() *Remember {
+	content, err := ioutil.ReadFile(RMBFILE) // read previously saved todo
+	if err != nil {
+		log.Debug("initialize Remember")
+		content = []byte(`{"todoList":[]}`)
+		log.Debug("created init file")
+	}
+
+	remember := &Remember{}
+	json.Unmarshal(content, remember)
+	log.Debugf("Done init: %+v", remember)
+	return remember
 }
 
 func (r *Remember) addTodo(message []string) {
@@ -62,9 +53,6 @@ func (r *Remember) listTodo() {
 	}
 
 	sort.Sort(TodoByTimestamp(r.Todos))
-	if sort.IsSorted(TodoByTimestamp(r.Todos)) {
-		fmt.Println("this guy is sorted")
-	}
 
 	fmt.Println("Your list of Todos:")
 	// TODO have max line length based on terminal width and break line
@@ -93,7 +81,14 @@ func (r *Remember) deleteTodo(args []string) {
 }
 
 func (r *Remember) writeToFile() {
-	res, err := json.Marshal(r)
+	jsonTodo, err := json.Marshal(r)
 	checkErr(err)
-	write(res)
+	ioutil.WriteFile(RMBFILE, jsonTodo, 0644)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		log.Error(err)
+		return
+	}
 }

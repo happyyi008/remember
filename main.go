@@ -7,15 +7,14 @@ package main
  * ability to change the status of a todo mark done
  * show status by colors
  * filter ls by status
+ * interactive mode
  *
  */
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	logging "github.com/op/go-logging"
-	"io/ioutil"
 	"os"
 	"text/tabwriter"
 )
@@ -37,36 +36,25 @@ var Usage = func() {
 	w.Flush()
 }
 
-func initializeFile() []byte {
-	log.Debug("initialize Remember")
-	empty := []byte(`{"todoList":[]}`)
-	write(empty)
-	log.Debug("created init file")
-	return empty
-}
-
 func main() {
 	help := flag.Bool("help", false, "print usage")
 	flag.BoolVar(help, "h", false, "print usage")
+
 	logLevel := flag.String("log-level", "INFO", "set log level")
 	flag.Parse()
+
+	// check if help is set
 	if *help {
 		Usage()
 		return
 	}
 
-	// set log level
 	level, _ := logging.LogLevel(*logLevel)
 	logging.SetLevel(level, app)
-	content, err := ioutil.ReadFile(RMBFILE)
-	if err != nil {
-		content = initializeFile()
-	}
-	remember := &Remember{}
-	json.Unmarshal(content, remember)
-	log.Debugf("Done init: %+v", remember)
 
 	cliArgs := flag.Args()
+
+	remember := NewRemember()
 
 	if len(cliArgs) == 0 {
 		remember.addTodo(cliArgs)
@@ -83,15 +71,4 @@ func main() {
 		remember.addTodo(cliArgs)
 	}
 	remember.writeToFile()
-}
-
-func write(payload []byte) {
-	ioutil.WriteFile(RMBFILE, payload, 0644)
-}
-
-func checkErr(err error) {
-	if err != nil {
-		log.Error(err)
-		return
-	}
 }
