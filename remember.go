@@ -32,19 +32,6 @@ func NewRemember() *Remember {
 	return remember
 }
 
-func (r *Remember) addTodo(message []string) {
-	messageStr := strings.Join(message, " ")
-	if messageStr == "" {
-		reader := bufio.NewReader(os.Stdin)
-		messageStr, _ = reader.ReadString('\n')
-		messageStr = strings.TrimSuffix(messageStr, "\n") // trim newline from the reader
-	}
-	todo := *NewTodo(messageStr, time.Now())
-	r.Todos = append([]Todo{todo}, r.Todos...) // hack to prepend new todo
-	log.Debug("added new todo")
-	r.writeToFile()
-}
-
 // TODO have different ways of printing
 func (r *Remember) listTodo() {
 	if len(r.Todos) == 0 {
@@ -66,17 +53,37 @@ func (r *Remember) listTodo() {
 	w.Flush()
 }
 
+func (r *Remember) addTodo(message []string) {
+	messageStr := strings.Join(message, " ")
+	if messageStr == "" {
+		reader := bufio.NewReader(os.Stdin)
+		messageStr, _ = reader.ReadString('\n')
+		messageStr = strings.TrimSuffix(messageStr, "\n") // trim newline from the reader
+	}
+	todo := *NewTodo(messageStr, time.Now())
+	r.Todos = append([]Todo{todo}, r.Todos...) // hack to prepend new todo
+	log.Debug("added new todo")
+
+	r.writeToFile()
+}
+
 func (r *Remember) deleteTodo(args []string) {
-	if len(args) != 2 {
-		fmt.Println("Invalid command: missing arguments")
+	if len(args) < 2 {
+		fmt.Println("Invalid command: missing delete index")
 		return
 	}
-	indexToDelete, err := strconv.Atoi(args[1])
-	if err != nil || indexToDelete > len(r.Todos) {
-		fmt.Println("Error: Not a valid index to delete.")
-		return
+
+	for offset, index := range args[1:] {
+		indexToDelete, err := strconv.Atoi(index)
+		indexToDelete -= offset
+
+		if err != nil || indexToDelete > len(r.Todos) {
+			fmt.Println("Error: Not a valid index to delete.")
+			return
+		}
+		r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
 	}
-	r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
+
 	r.writeToFile()
 }
 

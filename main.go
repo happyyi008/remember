@@ -31,7 +31,7 @@ var Usage = func() {
 	fmt.Fprintf(w, "Usage of %s:\n", app)
 	fmt.Fprintf(w, "$ rmb -help | -h\tprint your list of todos\n")
 	fmt.Fprintf(w, "$ rmb ls\tprint your list of todos\n")
-	fmt.Fprintf(w, "$ rmb rm <index>\tremoves the todo at <index> from your list\n")
+	fmt.Fprintf(w, "$ rmb rm <index>...\tremoves the todo at <index> from your list\n")
 	fmt.Fprintf(w, "$ rmb <todo>\tadds a new todo to your list\n")
 	w.Flush()
 }
@@ -70,5 +70,4 @@ func main() {
 	default:
 		remember.addTodo(cliArgs)
 	}
-	remember.writeToFile()
 }
