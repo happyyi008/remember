@@ -14,6 +14,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/c-bata/go-prompt"
 	logging "github.com/op/go-logging"
 	"os"
 	"text/tabwriter"
@@ -36,6 +37,26 @@ var Usage = func() {
 	w.Flush()
 }
 
+func completer(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{
+		{Text: "ls", Description: "Print your todo list"},
+	}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
+}
+
+func dispatch(action string, args []string, r *Remember) {
+	log.Debugf("Arguments: %+v", args)
+	switch action {
+	case "ls":
+		r.listTodo()
+	case "rm":
+		r.deleteTodo(args)
+	default:
+		r.addTodo(args)
+	}
+
+}
+
 func main() {
 	help := flag.Bool("help", false, "print usage")
 	flag.BoolVar(help, "h", false, "print usage")
@@ -56,18 +77,17 @@ func main() {
 
 	remember := NewRemember()
 
-	if len(cliArgs) == 0 {
-		remember.addTodo(cliArgs)
+	if len(cliArgs) == 0 { // run interactive mode
+		for {
+			action := prompt.Input("> ", completer)
+			log.Debugf("action: %+v", action)
+			if action == "" {
+				break
+			}
+			dispatch(action, cliArgs, remember)
+		}
 		return
 	}
 
-	log.Debugf("Arguments: %+v", cliArgs)
-	switch cliArgs[0] {
-	case "ls":
-		remember.listTodo()
-	case "rm":
-		remember.deleteTodo(cliArgs)
-	default:
-		remember.addTodo(cliArgs)
-	}
+	dispatch(cliArgs[0], cliArgs, remember)
 }

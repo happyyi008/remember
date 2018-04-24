@@ -61,7 +61,7 @@ func (r *Remember) addTodo(message []string) {
 		messageStr = strings.TrimSuffix(messageStr, "\n") // trim newline from the reader
 	}
 	todo := *NewTodo(messageStr, time.Now())
-	r.Todos = append([]Todo{todo}, r.Todos...) // hack to prepend new todo
+	r.Todos = append([]Todo{todo}, r.Todos...)
 	log.Debug("added new todo")
 
 	r.writeToFile()
@@ -96,6 +96,7 @@ func (r *Remember) writeToFile() {
 func checkErr(err error) {
 	if err != nil {
 		log.Error(err)
+		Usage()
 		return
 	}
 }
