@@ -68,12 +68,16 @@ func (r *Remember) addTodo(message []string) {
 }
 
 func (r *Remember) deleteTodo(args []string) {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		fmt.Println("Invalid command: missing delete index")
 		return
 	}
 
-	for offset, index := range args[1:] {
+	// sort the indice so we will delete entries in order
+	sort.Strings(args)
+	log.Debugf("sorted args %+v", args)
+
+	for offset, index := range args {
 		indexToDelete, err := strconv.Atoi(index)
 		indexToDelete -= offset
 

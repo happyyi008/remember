@@ -17,6 +17,7 @@ import (
 	"github.com/c-bata/go-prompt"
 	logging "github.com/op/go-logging"
 	"os"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -40,7 +41,9 @@ var Usage = func() {
 func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "ls", Description: "Print your todo list"},
+		{Text: "rm", Description: "Delete from todo list"},
 	}
+
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
@@ -50,7 +53,7 @@ func dispatch(action string, args []string, r *Remember) {
 	case "ls":
 		r.listTodo()
 	case "rm":
-		r.deleteTodo(args)
+		r.deleteTodo(args[1:])
 	default:
 		r.addTodo(args)
 	}
@@ -78,13 +81,15 @@ func main() {
 	remember := NewRemember()
 
 	if len(cliArgs) == 0 { // run interactive mode
+		remember.listTodo()
 		for {
 			action := prompt.Input("> ", completer)
 			log.Debugf("action: %+v", action)
 			if action == "" {
 				break
 			}
-			dispatch(action, cliArgs, remember)
+			args := strings.Split(action, " ")
+			dispatch(args[0], args, remember)
 		}
 		return
 	}
