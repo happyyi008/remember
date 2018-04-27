@@ -42,18 +42,44 @@ func completer(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
 		{Text: "ls", Description: "Print your todo list"},
 		{Text: "rm", Description: "Delete from todo list"},
+		{Text: "set", Description: "Set status of Todo"},
+		{Text: "help", Description: "Get help"},
+	}
+
+	currentLine := strings.Split(d.CurrentLineBeforeCursor(), " ")
+	log.Debugf("current line %+v, len: %d, 0: %v", currentLine, len(currentLine), currentLine[0])
+
+	// get suggestion for set instead
+	if currentLine[0] == "set" && len(currentLine) == 2 {
+		s = []prompt.Suggest{
+			{Text: "start", Description: "Start the task"},
+			{Text: "done", Description: "Finish task"},
+			{Text: "restart", Description: "Reset status to new"},
+		}
+	} else if len(currentLine) == 2 {
+		s = []prompt.Suggest{}
 	}
 
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
-func dispatch(action string, args []string, r *Remember) {
+func dispatch(args []string, r *Remember) {
 	log.Debugf("Arguments: %+v", args)
-	switch action {
+	switch args[0] {
 	case "ls":
 		r.listTodo()
 	case "rm":
+		if len(args) < 1 {
+			fmt.Println("Error: missing delete index")
+			break
+		}
 		r.deleteTodo(args[1:])
+	case "set":
+		if len(args) < 3 {
+			fmt.Println("Error: too little arguments")
+			break
+		}
+		r.setStatus(args[2:], args[1])
 	default:
 		r.addTodo(args)
 	}
@@ -89,10 +115,8 @@ func main() {
 				break
 			}
 			args := strings.Split(action, " ")
-			dispatch(args[0], args, remember)
+			dispatch(args, remember)
 		}
 		return
 	}
-
-	dispatch(cliArgs[0], cliArgs, remember)
 }

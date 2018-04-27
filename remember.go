@@ -33,6 +33,8 @@ func NewRemember() *Remember {
 }
 
 // TODO have different ways of printing
+// print order: in progress -> new -> finished
+// sorted by latest timestamp first
 func (r *Remember) listTodo() {
 	if len(r.Todos) == 0 {
 		fmt.Println("You have no todos in your list.")
@@ -46,9 +48,7 @@ func (r *Remember) listTodo() {
 	// so long todos don't break printing
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	for i, todo := range r.Todos {
-		fmt.Fprintf(w, " %d.\t%s\t\t%s\n", i+1,
-			todo.Message,
-			todo.Timestamp.Format("(15:04, Mon, Jan 2, 2006)"))
+		todo.Print(i+1, w)
 	}
 	w.Flush()
 }
@@ -68,12 +68,7 @@ func (r *Remember) addTodo(message []string) {
 }
 
 func (r *Remember) deleteTodo(args []string) {
-	if len(args) < 1 {
-		fmt.Println("Invalid command: missing delete index")
-		return
-	}
-
-	// sort the indice so we will delete entries in order
+	// sort the indices so we will delete entries in order
 	sort.Strings(args)
 	log.Debugf("sorted args %+v", args)
 
@@ -86,6 +81,25 @@ func (r *Remember) deleteTodo(args []string) {
 			return
 		}
 		r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
+	}
+
+	r.writeToFile()
+}
+
+func (r *Remember) setStatus(index []string, action string) {
+	for _, sidx := range index {
+		idx, err := strconv.Atoi(sidx)
+		checkErr(err)
+		idx -= 1
+
+		switch action {
+		case "start":
+			r.Todos[idx].TodoStatus = InProgress
+		case "done":
+			r.Todos[idx].TodoStatus = Done
+		case "restart":
+			r.Todos[idx].TodoStatus = New
+		}
 	}
 
 	r.writeToFile()
