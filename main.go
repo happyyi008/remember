@@ -30,37 +30,12 @@ var (
 
 var Usage = func() {
 	w := tabwriter.NewWriter(os.Stderr, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "Usage of %s:\n", app)
-	fmt.Fprintf(w, "$ rmb -help | -h\tprint your list of todos\n")
-	fmt.Fprintf(w, "$ rmb ls\tprint your list of todos\n")
-	fmt.Fprintf(w, "$ rmb rm <index>...\tremoves the todo at <index> from your list\n")
-	fmt.Fprintf(w, "$ rmb <todo>\tadds a new todo to your list\n")
+	fmt.Fprintf(w, "%s usage:\n", app)
+	fmt.Fprintf(w, "help\tprint usage\n")
+	fmt.Fprintf(w, "ls\tprint your list of todos\n")
+	fmt.Fprintf(w, "rm <index>...\tremoves the todo at <index> from your list\n")
+	fmt.Fprintf(w, "new <todo>\tadds a new todo to your list\n")
 	w.Flush()
-}
-
-func completer(d prompt.Document) []prompt.Suggest {
-	s := []prompt.Suggest{
-		{Text: "ls", Description: "Print your todo list"},
-		{Text: "rm", Description: "Delete from todo list"},
-		{Text: "set", Description: "Set status of Todo"},
-		{Text: "help", Description: "Get help"},
-	}
-
-	currentLine := strings.Split(d.CurrentLineBeforeCursor(), " ")
-	log.Debugf("current line %+v, len: %d, 0: %v", currentLine, len(currentLine), currentLine[0])
-
-	// get suggestion for set instead
-	if currentLine[0] == "set" && len(currentLine) == 2 {
-		s = []prompt.Suggest{
-			{Text: "start", Description: "Start the task"},
-			{Text: "done", Description: "Finish task"},
-			{Text: "restart", Description: "Reset status to new"},
-		}
-	} else if len(currentLine) == 2 {
-		s = []prompt.Suggest{}
-	}
-
-	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
 
 func dispatch(args []string, r *Remember) {
@@ -80,10 +55,13 @@ func dispatch(args []string, r *Remember) {
 			break
 		}
 		r.setStatus(args[2:], args[1])
+	case "new":
+		r.addTodo(args[1:])
+	case "help":
+		Usage()
 	default:
 		r.addTodo(args)
 	}
-
 }
 
 func main() {

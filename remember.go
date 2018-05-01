@@ -65,6 +65,8 @@ func (r *Remember) addTodo(message []string) {
 	log.Debug("added new todo")
 
 	r.writeToFile()
+
+	fmt.Println("New task created")
 }
 
 func (r *Remember) deleteTodo(args []string) {
@@ -72,22 +74,32 @@ func (r *Remember) deleteTodo(args []string) {
 	sort.Strings(args)
 	log.Debugf("sorted args %+v", args)
 
-	for offset, index := range args {
+	numDeleted := 0
+	for _, index := range args {
+		if index == "" {
+			continue
+		}
 		indexToDelete, err := strconv.Atoi(index)
-		indexToDelete -= offset
+		indexToDelete -= numDeleted
 
 		if err != nil || indexToDelete > len(r.Todos) {
 			fmt.Println("Error: Not a valid index to delete.")
 			return
 		}
 		r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
+		numDeleted += 1
 	}
 
 	r.writeToFile()
+
+	fmt.Printf("Deleted %d tasks\n", numDeleted)
 }
 
 func (r *Remember) setStatus(index []string, action string) {
 	for _, sidx := range index {
+		if sidx == "" {
+			continue
+		}
 		idx, err := strconv.Atoi(sidx)
 		checkErr(err)
 		idx -= 1
