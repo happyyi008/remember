@@ -2,22 +2,21 @@ package main
 
 import (
 	"fmt"
-	"text/tabwriter"
 	"time"
 )
 
 type Status int
 
 const (
-	New Status = iota
-	InProgress
+	InProgress Status = iota
+	New
 	Done
 )
 
 func (s Status) String() string {
 	names := []string{
-		"New",
 		"In Progress",
+		"New",
 		"Finished",
 	}
 	return names[s]
@@ -33,23 +32,29 @@ func NewTodo(message string, timestamp time.Time) *Todo {
 	return &Todo{Message: message, Timestamp: timestamp, TodoStatus: New}
 }
 
-func (todo *Todo) Print(index int, w *tabwriter.Writer) {
-	fmt.Fprintf(w, " %d.\t%s\t\t%s\t%s\n", index,
+func (todo Todo) String() string {
+	return fmt.Sprintf("\t%s\t\t%s\t%s",
 		todo.Message,
 		todo.Timestamp.Format("(15:04, Mon. Jan 2, 2006)"),
-		todo.TodoStatus.String(),
+		todo.TodoStatus,
 	)
 }
 
 // The type def and the follwing three funcs are for sorting todos
 // by timestamp. Latest todo at the top.
-type TodoByTimestamp []Todo
+type TodoByTimestamp []*Todo
 
 func (t TodoByTimestamp) Len() int {
 	return len(t)
 }
 
 func (t TodoByTimestamp) Less(i, j int) bool {
+	if t[j].TodoStatus > t[i].TodoStatus {
+		return true
+	}
+	if t[j].TodoStatus < t[i].TodoStatus {
+		return false
+	}
 	return t[j].Timestamp.Before(t[i].Timestamp)
 }
 

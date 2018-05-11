@@ -21,7 +21,7 @@ import (
 	"text/tabwriter"
 )
 
-const app = "rmb"
+const app = "remember"
 
 var (
 	log     = logging.MustGetLogger(app)
@@ -30,11 +30,14 @@ var (
 
 var Usage = func() {
 	w := tabwriter.NewWriter(os.Stderr, 0, 0, 2, ' ', 0)
+	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "%s usage:\n", app)
-	fmt.Fprintf(w, "help\tprint usage\n")
-	fmt.Fprintf(w, "ls\tprint your list of todos\n")
-	fmt.Fprintf(w, "rm <index>...\tremoves the todo at <index> from your list\n")
-	fmt.Fprintf(w, "new <todo>\tadds a new todo to your list\n")
+	fmt.Fprintf(w, "\thelp\tprint usage\n")
+	fmt.Fprintf(w, "\tls\tprint your list of todos\n")
+	fmt.Fprintf(w, "\trm [index...]\tremoves the todo at <index>\n")
+	fmt.Fprintf(w, "\tset <status> [index...]\tset the status of <index>\n")
+	fmt.Fprintf(w, "\tnew <todo>\tadds a new todo to your list\n")
+	fmt.Fprintf(w, "\n")
 	w.Flush()
 }
 

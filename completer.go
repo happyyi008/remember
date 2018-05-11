@@ -11,7 +11,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 		{Text: "rm", Description: "Delete from todo list"},
 		{Text: "set", Description: "Set status of Todo"},
 		{Text: "new", Description: "Add a new task"},
-		{Text: "help", Description: "Get help"},
+		{Text: "help", Description: "Get detailed description of each command"},
 	}
 
 	currentLine := strings.Split(d.CurrentLineBeforeCursor(), " ")
