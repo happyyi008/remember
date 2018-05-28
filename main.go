@@ -12,6 +12,7 @@ package main
  */
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/c-bata/go-prompt"
@@ -28,21 +29,56 @@ var (
 	RMBFILE = os.Getenv("HOME") + "/.remember"
 )
 
-var Usage = func() {
+func usage() {
 	w := tabwriter.NewWriter(os.Stderr, 0, 0, 2, ' ', 0)
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "%s usage:\n", app)
 	fmt.Fprintf(w, "\thelp\tprint usage\n")
 	fmt.Fprintf(w, "\tls\tprint your list of todos\n")
-	fmt.Fprintf(w, "\trm [index...]\tremoves the todo at <index>\n")
-	fmt.Fprintf(w, "\tset <status> [index...]\tset the status of <index>\n")
+	fmt.Fprintf(w, "\trm [index ...]\tremoves the todo at <index>\n")
+	fmt.Fprintf(w, "\tset <status> [index ...]\tset the status of <index>\n")
 	fmt.Fprintf(w, "\tnew <todo>\tadds a new todo to your list\n")
 	fmt.Fprintf(w, "\n")
 	w.Flush()
 }
 
-func dispatch(args []string, r *Remember) {
-	log.Debugf("Arguments: %+v", args)
+func init() {
+	help := flag.Bool("help", false, "print usage")
+	flag.BoolVar(help, "h", false, "print usage")
+
+	logLevel := flag.String("log-level", "INFO", "set log level")
+	flag.Parse()
+
+	// check if help is set
+	if *help {
+		usage()
+		return
+	}
+
+	level, _ := logging.LogLevel(*logLevel)
+	logging.SetLevel(level, app)
+}
+
+func main() {
+	remember := NewRemember()
+	remember.listTodo()
+
+	for {
+		action := prompt.Input("> ", completer)
+		log.Debugf("action: %+v", action)
+		if action == "" {
+			break
+		}
+		dispatch(remember, action)
+	}
+
+	return
+}
+
+func dispatch(r *Remember, action string) {
+	log.Debugf("Action: %+v", action)
+	args := strings.Split(action, " ")
+
 	switch args[0] {
 	case "ls":
 		r.listTodo()
@@ -57,47 +93,27 @@ func dispatch(args []string, r *Remember) {
 			fmt.Println("Error: too little arguments")
 			break
 		}
-		r.setStatus(args[2:], args[1])
+		r.setStatus(args[1], args[2:])
 	case "new":
-		r.addTodo(args[1:])
+		trimmedMessage := strings.TrimLeft(action, "new ")
+		r.addTodo(checkMessage(trimmedMessage))
 	case "help":
-		Usage()
+		usage()
 	default:
-		r.addTodo(args)
+		r.addTodo(checkMessage(action))
 	}
 }
 
-func main() {
-	help := flag.Bool("help", false, "print usage")
-	flag.BoolVar(help, "h", false, "print usage")
-
-	logLevel := flag.String("log-level", "INFO", "set log level")
-	flag.Parse()
-
-	// check if help is set
-	if *help {
-		Usage()
-		return
+func checkMessage(userInput string) string {
+	if userInput != "" {
+		return userInput
 	}
+	return readStdin()
+}
 
-	level, _ := logging.LogLevel(*logLevel)
-	logging.SetLevel(level, app)
-
-	cliArgs := flag.Args()
-
-	remember := NewRemember()
-
-	if len(cliArgs) == 0 { // run interactive mode
-		remember.listTodo()
-		for {
-			action := prompt.Input("> ", completer)
-			log.Debugf("action: %+v", action)
-			if action == "" {
-				break
-			}
-			args := strings.Split(action, " ")
-			dispatch(args, remember)
-		}
-		return
-	}
+func readStdin() string {
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimSuffix(input, "\n") // trim newline from the reader
+	return input
 }

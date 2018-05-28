@@ -1,14 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"text/tabwriter"
 	"time"
 )
@@ -54,68 +53,68 @@ func (r *Remember) listTodo() {
 	w.Flush()
 }
 
-func (r *Remember) addTodo(message []string) {
-	messageStr := strings.Join(message, " ")
-	if messageStr == "" {
-		reader := bufio.NewReader(os.Stdin)
-		messageStr, _ = reader.ReadString('\n')
-		messageStr = strings.TrimSuffix(messageStr, "\n") // trim newline from the reader
-	}
-	todo := NewTodo(messageStr, time.Now())
+func (r *Remember) addTodo(message string) {
+	todo := NewTodo(message, time.Now())
 	r.Todos = append([]*Todo{todo}, r.Todos...)
 	log.Debug("added new todo")
 
 	r.writeToFile()
-
 	fmt.Println("New task created")
 }
 
 func (r *Remember) deleteTodo(args []string) {
 	// sort the indices so we will delete entries in order
-	sort.Strings(args)
-	log.Debugf("sorted args %+v", args)
+	toDelete, err := sliceAtoi(args)
+	checkErr(err)
+
+	sort.Ints(toDelete)
+	log.Debugf("sorted args %+v", toDelete)
 
 	numDeleted := 0
-	for _, index := range args {
-		if index == "" {
-			continue
-		}
-		indexToDelete, err := strconv.Atoi(index)
-		indexToDelete -= numDeleted
-
-		if err != nil || indexToDelete > len(r.Todos) {
-			fmt.Println("Error: Not a valid index to delete.")
+	for _, index := range toDelete {
+		index -= numDeleted
+		err := r.deleteAtIndex(index)
+		if err != nil {
+			fmt.Println(err)
 			return
 		}
-		r.Todos = append(r.Todos[:indexToDelete-1], r.Todos[indexToDelete:]...)
 		numDeleted += 1
 	}
 
 	r.writeToFile()
-
 	fmt.Printf("Deleted %d tasks\n", numDeleted)
 }
 
-func (r *Remember) setStatus(index []string, action string) {
-	for _, sidx := range index {
-		if sidx == "" {
-			continue
-		}
-		idx, err := strconv.Atoi(sidx)
-		checkErr(err)
-		idx -= 1
+func (r *Remember) deleteAtIndex(index int) error {
+	if index > len(r.Todos) {
+		log.Debugf("can't delete index: %d", index)
+		return errors.New("Not a valid index to delete")
+	}
+	r.Todos = append(r.Todos[:index-1], r.Todos[index:]...)
+	return nil
+}
 
+func (r *Remember) setStatus(action string, indices []string) {
+	toSet, err := sliceAtoi(indices)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, index := range toSet {
+		index -= 1
 		switch action {
 		case "start":
-			r.Todos[idx].TodoStatus = InProgress
+			r.Todos[index].TodoStatus = InProgress
 		case "done":
-			r.Todos[idx].TodoStatus = Done
+			r.Todos[index].TodoStatus = Done
 		case "restart":
-			r.Todos[idx].TodoStatus = New
+			r.Todos[index].TodoStatus = New
 		}
 	}
 
 	r.writeToFile()
+	fmt.Printf("Updated %d tasks\n", len(toSet))
 }
 
 func (r *Remember) writeToFile() {
@@ -124,10 +123,30 @@ func (r *Remember) writeToFile() {
 	ioutil.WriteFile(RMBFILE, jsonTodo, 0644)
 }
 
+// transforms a slice of strings to a slice of ints and remove empty strings
+func sliceAtoi(strSlice []string) ([]int, error) {
+	elementCount := 0
+	intSlice := make([]int, len(strSlice))
+	for _, strIdx := range strSlice {
+		if strIdx == "" {
+			continue
+		}
+		idx, err := strconv.Atoi(strIdx)
+		if err != nil {
+			return []int{}, err
+		}
+
+		intSlice[elementCount] = idx
+		elementCount += 1
+	}
+	log.Debugf("sliceAtoi: %v", intSlice)
+	return intSlice[:elementCount], nil
+}
+
 func checkErr(err error) {
 	if err != nil {
 		log.Error(err)
-		Usage()
+		usage()
 		return
 	}
 }

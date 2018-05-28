@@ -15,7 +15,6 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 
 	currentLine := strings.Split(d.CurrentLineBeforeCursor(), " ")
-	log.Debugf("current line %+v, len: %d, 0: %v", currentLine, len(currentLine), currentLine[0])
 
 	// get suggestion for set instead
 	if currentLine[0] == "set" && len(currentLine) == 2 {

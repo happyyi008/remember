@@ -33,9 +33,8 @@ func NewTodo(message string, timestamp time.Time) *Todo {
 }
 
 func (todo Todo) String() string {
-	return fmt.Sprintf("\t%s\t\t%s\t%s",
+	return fmt.Sprintf("\t%s\t%s",
 		todo.Message,
-		todo.Timestamp.Format("(15:04, Mon. Jan 2, 2006)"),
 		todo.TodoStatus,
 	)
 }
